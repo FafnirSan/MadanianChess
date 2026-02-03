@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Madanian Chess</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+body { 
+font-family: 'Orbitron', sans-serif;
+margin: 0; 
+padding: 0; 
+background: linear-gradient(135deg, #0f0f23, #1a1a2e); 
+color: #fff; overflow: hidden; }
+
+#loading { position: fixed; 
+top: 0; left: 0; width: 100%; 
+height: 100%; 
+background: radial-gradient(circle, #1a1a2e, #0f0f23); 
+display: flex; 
+flex-direction: column; 
+align-items: center; 
+justify-content: center; 
+z-index: 10; }
+
+#loading h1 { font-size: 3em; 
+color: #00d4ff; 
+text-shadow: 0 0 20px #00d4ff; 
+animation: glow 2s infinite alternate; }
+
+#bar { 
+  height: 100%; 
+  background: linear-gradient(90deg, #00d4ff, #0099cc);
+  width: 0%;
+  transition: width 3s linear; }
+  
+.particle { 
+  position: absolute;
+  width: 4px;
+  height: 4px; 
+  background: #00d4ff; 
+  border-radius: 50%; 
+  animation: float 3s infinite linear; }
+  
+@keyframes glow { 
+from { text-shadow: 0 0 20px #00d4ff; } 
+to { text-shadow: 0 0 30px #00d4ff, 0 0 40px #00d4ff; } }
+        
+@keyframes float { 
+0% { transform: translateY(0) rotate(0deg); opacity: 1; } 
+100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; } }
+        
+#game { 
+display: none; 
+text-align: center; 
+padding: 20px; }
+
+#game h1 { 
+		font-size: 2.5em; 
+		color: #00d4ff; 
+		text-shadow: 0 0 20px #00d4ff;
+}
+        
+button { background: linear-gradient(45deg, #00d4ff, #0099cc); 
+border: none; color: #fff; padding: 15px 30px; font-size: 18px; margin: 10px; border-radius: 10px; cursor: pointer; box-shadow: 0 0 20px rgba(0, 212, 255, 0.5); transition: all 0.3s; }
+ 
+button:hover { transform: scale(1.1); 
+box-shadow: 0 0 30px rgba(0, 212, 255, 0.8); }
+
+#board { width: 500px; 
+height: 500px; margin: 20px auto; border: 5px solid #00d4ff; border-radius: 15px; display: grid; grid-template-columns: repeat(8, 1fr); box-shadow: 0 0 50px rgba(0, 212, 255, 0.3); background: linear-gradient(45deg, #2c2c54, #40407a); }
+
+.square { width: 62.5px; 
+height: 62.5px; 
+display: flex;
+align-items: center; 
+justify-content: center; 
+cursor: pointer; 
+transition: all 0.2s; }
+
+.square:hover { background: rgba(0, 212, 255, 0.2); }
+
+.highlight { background: rgba(255, 255, 0, 0.5) !important; }
+
+.piece { width: 50px; 
+height: 50px; 
+filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5)); }
+
+.white-piece { fill: #c0c0c0; }
+
+.black-piece { fill: #333; }
+
+#status { font-size: 20px; 
+margin: 20px; color: #00d4ff; 
+text-shadow: 0 0 10px #00d4ff; }
+		
+#progress {
+  width: 300px;
+  height: 20px;
+  background: #333;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+#startBtn {
+  margin-top: 20px;
+  padding: 10px 25px;
+  font-size: 1.1em;
+  background: #00d4ff;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  color: #000;
+  box-shadow: 0 0 15px #00d4ff;
+  display: none;
+}
+
+#startBtn:hover {
+  transform: scale(1.1);
+}
+
+.square {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}	
+.square.light {
+    background: #f0d9b5;
+}
+
+.square.dark {
+    background: #b58863;
+}
+
+
+/* BORDER MERAH SAAT CHECK */
+#board.check {
+    border-color: #ff4d4d;
+    box-shadow:
+        0 0 25px rgba(255, 77, 77, 0.9),
+        inset 0 0 20px rgba(255, 77, 77, 0.4);
+}
+.hidden {
+    display: none;
+}
+
+.futuristic-text {
+    margin-top: 25px;
+    font-size: 1.2em;
+    color: #00d4ff;
+    text-shadow:
+        0 0 10px #00d4ff,
+        0 0 20px rgba(0, 212, 255, 0.6);
+    animation: glow 2s infinite alternate;
+}
+
+.menu-buttons {
+    margin-top: 15px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.menu-buttons button {
+    background: linear-gradient(45deg, #00d4ff, #0099cc);
+    border: none;
+    color: #fff;
+    padding: 12px 30px;
+    font-size: 1.1em;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+    transition: all 0.3s ease;
+}
+
+.menu-buttons button:hover {
+    transform: scale(1.12);
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.9);
+}
+#loading {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+#colorSelect,
+#modeSelect {
+    margin-top: 25px;
+}
+
+
+    </style>
+</head>
+<body>
+<div id="loading">
+        <h1>Madanian Chess</h1>
+        <div id="progress"><div id="bar"></div></div>
+        <p id="loadingText">Loading Futuristic Experience...</p>
+		<button id="startBtn">Mulai Main</button>
+		
+<div id="cutscene" class="hidden">
+  <video id="openingVideo" muted>
+    <source src="MadanianGame.mp4" type="video/mp4">
+  </video>
+</div>
+
+        <div id="colorSelect" class="hidden">
+    <p class="futuristic-text">Pilih warna bidak yang akan dimainkan</p>
+    <div class="menu-buttons">
+        <button id="chooseWhite">Putih</button>
+        <button id="chooseBlack">Hitam</button>
+    </div>
+</div>
+
+        <div id="modeSelect" class="hidden">
+    <p class="futuristic-text">Pilih mode permainan</p>
+    <div class="menu-buttons">
+        <button id="modeAI">Player vs AI</button>
+        <button id="modePVP">Player vs Player</button>
+    </div>
+</div>
+        <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 20%; animation-delay: 0.5s;"></div>
+        <div class="particle" style="left: 30%; animation-delay: 1s;"></div>
+        <div class="particle" style="left: 40%; animation-delay: 1.5s;"></div>
+        <div class="particle" style="left: 50%; animation-delay: 2s;"></div>
+        <div class="particle" style="left: 60%; animation-delay: 2.5s;"></div>
+        <div class="particle" style="left: 70%; animation-delay: 3s;"></div>
+        <div class="particle" style="left: 80%; animation-delay: 3.5s;"></div>
+        <div class="particle" style="left: 90%; animation-delay: 4s;"></div>
+    </div>
+
+<div id="game">
+        <h1>Madanian Chess</h1>
+        <div id="board"></div>
+        <div id="status">Giliran Putih</div>
+        <button onclick="resetGame()">Reset Game</button>
+    </div>
+
+<script>
+	
+let chess = new Chess();
+let selectedSquare = null;        
+let playerColor = null;
+let aiColor = null;
+let chosenMode  = null;  
+const bar        = document.getElementById("bar");
+const progress   = document.getElementById("progress");
+const text = document.getElementById("loadingText");
+const startBtn   = document.getElementById("startBtn");
+const colorSelect = document.getElementById("colorSelect");
+const modeSelect  = document.getElementById("modeSelect");
+const chooseWhite = document.getElementById("chooseWhite");
+const chooseBlack = document.getElementById("chooseBlack");
+const modeAI  = document.getElementById("modeAI");
+const modePVP = document.getElementById("modePVP");
+
+setTimeout(() => {
+    bar.style.width = "100%";
+}, 100);
+
+setTimeout(() => {
+    progress.style.display = "none";
+    text.style.display = "none";
+    startBtn.style.display = "inline-block";
+}, 3000);
+
+startBtn.onclick = () => {
+    startBtn.style.display = "none";
+    colorSelect.classList.remove("hidden");
+};
+
+chooseWhite.onclick = () => {
+    playerColor = 'w';
+    aiColor = 'b';
+
+    colorSelect.classList.add("hidden");
+    modeSelect.classList.remove("hidden");
+};
+
+chooseBlack.onclick = () => {
+    playerColor = 'b';
+    aiColor = 'w';
+
+    colorSelect.classList.add("hidden");
+    modeSelect.classList.remove("hidden");
+};
+
+modeAI.onclick = () => {
+    chosenMode = "ai";
+
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("game").style.display = "block";
+
+    renderBoard();
+    updateStatus();
+
+    if (playerColor === 'b') {
+        setTimeout(computerMove, 600);
+    }
+};
+
+modePVP.onclick = () => {
+    chosenMode = "pvp";
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("game").style.display = "block";
+    renderBoard();
+    updateStatus();
+};
+	
+function renderBoard() {
+    const boardElement = document.getElementById('board');
+    boardElement.innerHTML = '';
+    const board = chess.board();
+
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+
+            const row = playerColor === 'w' ? r : 7 - r;
+            const col = playerColor === 'w' ? c : 7 - c;
+            const square = document.createElement('div');
+            square.classList.add('square');
+
+            if ((row + col) % 2 === 0) {
+                square.classList.add('light');
+            } else {
+                square.classList.add('dark');
+            }
+
+            const squareName =
+                String.fromCharCode(97 + col) + (8 - row);
+            square.dataset.square = squareName;
+
+            const piece = board[row][col];
+            if (piece) {
+                square.innerHTML = getPieceSVG(piece);
+            }
+
+            square.addEventListener('click', handleSquareClick);
+            boardElement.appendChild(square);
+        }
+    }
+}
+
+        function getPieceSVG(piece) {
+            const colorClass = piece.color === 'w' ? 'white-piece' : 'black-piece';
+            const symbols = {
+                p: 'M 22,9 C 19.79,9 18,10.79 18,13 C 18,13.89 18.29,14.71 18.78,15.38 C 16.83,16.5 15.5,18.59 15.5,21 C 15.5,23.03 16.44,24.84 17.91,26.03 C 14.91,27.09 10.5,31.58 10.5,39 L 33.5,39 C 33.5,31.58 29.09,27.09 26.09,26.03 C 27.56,24.84 28.5,23.03 28.5,21 C 28.5,18.59 27.17,16.5 25.22,15.38 C 25.71,14.71 26,13.89 26,13 C 26,10.79 24.21,9 22,9 z',
+                r: 'M 9,39 L 36,39 L 36,36 L 9,36 L 9,39 z M 12,36 L 12,32 L 33,32 L 33,36 L 12,36 z M 11,14 L 11,9 L 15,9 L 15,11 L 20,11 L 20,9 L 25,9 L 25,11 L 30,11 L 30,9 L 34,9 L 34,14 L 11,14 z M 34,14 L 31,17 L 14,17 L 11,14 L 34,14 z M 31,17 L 31,29.5 L 14,29.5 L 14,17 L 31,17 z M 31,29.5 L 32.5,32 L 12.5,32 L 14,29.5 L 31,29.5 z',
+                n: 'M 22,10 C 32.5,11 38.5,18 38,39 L 15,39 C 15,30 25,32.5 23,18 C 23,11.5 27,10.5 31,10 C 31,9.5 32.5,9 33,9 C 33,9.5 32.5,10 31,10 C 27,10.5 23,11.5 23,18 C 25,32.5 15,30 15,39 L 38,39 C 38.5,18 32.5,11 22,10 z',
+                b: 'M 9,36 C 12.39,35.03 19.11,36.43 22.5,34 C 25.89,36.43 32.61,35.03 36,36 C 36,36 37.65,36.54 39,38 C 38.32,38.97 37.35,38.99 36,38.5 C 32.61,37.53 25.89,38.96 22.5,37.5 C 19.11,38.96 12.39,37.53 9,38.5 C 7.65,38.99 6.68,38.97 6,38 C 7.35,36.54 9,36 9,36 z M 15,32 C 17.5,34.5 27.5,34.5 30,32 C 30.5,30.5 30,30 30,30 C 30,27.5 27.5,26 27.5,26 C 33,24.5 33.5,14.5 22.5,10.5 C 11.5,14.5 12,24.5 17.5,26 C 17.5,26 15,27.5 15,30 C 15,30 14.5,30.5 15,32 z M 25,8 A 2.5,2.5 0 1,1 20,8 A 2.5,2.5 0 1,1 25,8 z',
+                q: 'M 9,26 C 17.5,24.5 30,24.5 36,26 L 38,14 L 31,25 L 31,11 L 25.5,24.5 L 22.5,9.5 L 19.5,24.5 L 14,10.5 L 14,25 L 7,14 L 9,26 z M 9,26 C 9,28 10.5,28 11.5,30 C 12.5,31.5 12.5,31 12,33.5 C 10.5,34.5 10.5,36 10.5,36 C 9,37.5 11,38.5 11,38.5 C 17.5,39.5 27.5,39.5 34,38.5 C 34,38.5 35.5,37.5 34,36 C 34,36 34.5,34.5 33,33.5 C 32.5,31 32.5,31.5 33.5,30 C 34.5,28 36,28 36,26 C 27.5,24.5 17.5,24.5 9,26 z M 11.5,30 C 10,29.5 10,29.5 11,28.5 C 11,28.5 12.5,29 12,30.5 C 12.5,31.5 12.5,31.5 12,33.5 C 10.5,34.5 10.5,36 10.5,36 C 9,37.5 11,38.5 11,38.5 C 17.5,39.5 27.5,39.5 34,38.5 C 34,38.5 35.5,37.5 34,36 C 34,36 34.5,34.5 33,33.5 C 32.5,31 32.5,31.5 33.5,30 C 34.5,28 36,28 36,26 C 27.5,24.5 17.5,24.5 9,26 C 9,28 10.5,28 11.5,30 z',
+                k: 'M 22.5,11.63 L 22.5,6 L 20.5,6 L 20.5,11.63 L 14.5,11.63 L 14.5,13.63 L 20.5,13.63 L 20.5,18.63 L 22.5,18.63 L 22.5,13.63 L 28.5,13.63 L 28.5,11.63 L 22.5,11.63 z M 22.5,25 C 22.5,25 27,17.5 25.5,14.5 C 25.5,14.5 24.5,12 22.5,12 C 20.5,12 19.5,14.5 19.5,14.5 C 18,17.5 22.5,25 22.5,25 z M 11.5,37 C 17,40.5 27,40.5 32.5,37 L 32.5,30 C 32.5,30 41.5,25.5 38.5,19.5 C 34.5,13 25,16 22.5,23.5 L 22.5,27 L 22.5,23.5 C 19,16 9.5,13 6.5,19.5 C 3.5,25.5 11.5,29.5 11.5,30 L 11.5,37 z M 20,8 L 25,8 L 25,4.5 L 20,4.5 L 20,8 z'
+            };
+            return `
+<svg class="piece" viewBox="0 0 45 45">
+  <path
+  d="${symbols[piece.type]}"
+  fill="${piece.color === 'w' ? '#f5f5f5' : '#1a1a1a'}"
+  stroke="#000"
+  stroke-width="0.8"
+/>
+
+</svg>`;
+
+        }
+
+function handleSquareClick(event) {
+    const square = event.target.closest('.square').dataset.square;
+    if (selectedSquare) {
+        const move = chess.move({ from: selectedSquare, to: square, promotion: 'q' });
+        if (move) {
+            renderBoard();
+            selectedSquare = null;
+            updateStatus();
+
+            // AI hanya jalan kalau modeAI dan giliran AI
+            if (chosenMode === "ai" && chess.turn() !== playerColor) {
+                setTimeout(computerMove, 1000);
+            }
+        } else {
+            selectedSquare = square;
+            highlightMoves(square);
+        }
+    } else {
+        selectedSquare = square;
+        highlightMoves(square);
+    }
+}
+
+        function highlightMoves(square) {
+            document.querySelectorAll('.square').forEach(sq => sq.classList.remove('highlight'));
+            const moves = chess.moves({ square: square, verbose: true });
+            moves.forEach(move => {
+                const target = document.querySelector(`[data-square="${move.to}"]`);
+                if (target) target.classList.add('highlight');
+            });
+        }
+
+function updateStatus() {
+    const statusElement = document.getElementById('status');
+    const boardElement = document.getElementById('board');
+	boardElement.classList.remove('check');
+
+    if (chess.game_over()) {
+    if (chess.in_checkmate()) {
+        const loser = chess.turn(); // 'w' atau 'b'
+
+        if (chosenMode === "ai") {
+            // MODE AI → bandingkan dengan warna player
+            if (loser === playerColor) {
+                statusElement.textContent = "Checkmate! Anda Kalah 😵";
+            } else {
+                statusElement.textContent = "Checkmate! Anda Menang 🎉";
+            }
+        } else {
+            // MODE PVP
+            statusElement.textContent =
+                loser === 'w'
+                    ? "Checkmate! Player 2 Menang ♟️" // Hitam menang
+                    : "Checkmate! Player 1 Menang ♟️"; // Putih menang
+        }
+    } else {
+        statusElement.textContent = "Game Over (Draw)";
+    }
+    return;
+}
+    if (chess.in_check()) {
+        statusElement.textContent =
+            (chess.turn() === 'w'
+                ? 'Raja Putih'
+                : 'Raja Hitam') + ' sedang CHECK!';
+        boardElement.classList.add('check');
+    } else {
+        if (chosenMode === "ai") {
+            statusElement.textContent =
+                chess.turn() === 'w' ? 'Giliran Putih' : 'Giliran Hitam';
+        } else {
+            // Mode PVP → tampilkan player 1 / 2
+            statusElement.textContent =
+                chess.turn() === 'w' ? 'Giliran Player 1 (Putih)' : 'Giliran Player 2 (Hitam)';
+        }
+    }
+}
+
+        function computerMove() {
+            const moves = chess.moves({ verbose: true });
+            if (moves.length === 0) return;
+            const move = moves[Math.floor(Math.random() * moves.length)];
+            chess.move(move);
+            renderBoard();
+            updateStatus();
+        }
+
+        function resetGame() {
+            chess.reset();
+            selectedSquare = null;
+            renderBoard();
+            updateStatus();
+        }
+    </script>
+</body>
+</html>
